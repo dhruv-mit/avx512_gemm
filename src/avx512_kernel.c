@@ -1,13 +1,10 @@
 #include "avx512_kernel.h"
 
-
 void kernel_bf16_int4_bf16(
     const uint16_t* A,             //A matrix
     const uint8_t * B,              //B matrix(2 elements per 8 bit)
     const uint16_t* S,               //sclae matrix
     float* C,                        //C matrix
-    // int da,                       //not taking padding  
-    // int db,                       //into account
     int r,
     int c,
     int k,
@@ -24,7 +21,7 @@ void kernel_bf16_int4_bf16(
         for(int col = 0; col < c;col++)
         {
             const uint8_t* Bc = B + (col * k)/2;
-            const uint16_t* Sc = S + (col * k)/64;
+            const uint16_t* Sc = S + (col * k)/32;
 
             __m512 acc = _mm512_setzero_ps();
 
@@ -66,8 +63,6 @@ void kernel_bf16_int4_bf16(
             float scale_f = *(float*)&s_bits;
 
             Cr[col] += reduced * scale_f;
-
-
 
         }
     }
