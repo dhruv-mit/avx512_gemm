@@ -12,5 +12,6 @@ void kernel_bf16_int4_bf16(
     int r,
     int c,
     int k,
-    const uint16_t* lut
+    const uint16_t* lut,
+    int col_size_of_c
 );

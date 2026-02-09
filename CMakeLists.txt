@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 # include_directories("${PROJECT_SOURCE_DIR}/common")
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-add_executable(MATMUL
+add_executable(matmul
     avx512_test.c
     src/avx512_kernel.c
     src/avx512_matmul.c

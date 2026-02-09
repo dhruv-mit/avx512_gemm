@@ -2,7 +2,7 @@
 
 #pragma once
 
-void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K, const uint16_t* lut)
+void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K, const uint16_t* lut, int col_size_of_c)
 {
     int mr;
     int nr;
@@ -12,7 +12,7 @@ void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K,
     {
         for(int col = 0;col< N;col += nr)
         {
-            kernel_bf16_int4_bf16(A,B,S,C,row,col, K, lut);
+            kernel_bf16_int4_bf16(A,B,S,C,row,col, K, lut, col_size_of_c);
         }
     }
 }

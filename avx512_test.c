@@ -36,11 +36,11 @@ static inline float bf16_to_fp32(uint16_t x) {
 
 int main() {
 
-    const int r = 4;
-    const int c = 4;
-    const int k = 64;   // MUST be multiple of 32
-    const int mr = 4;   // should divide r for now
-    const int nr = 4;   // should divide c for now
+    const int r = 200;
+    const int c = 200;
+    const int k = 6400;   // MUST be multiple of 32
+    const int mr = 2;   // should divide r for now
+    const int nr = 1;   // should divide c for now
 
     uint16_t A[r*k];
     uint8_t  B[c*k/2];
@@ -50,29 +50,28 @@ int main() {
 
     // ---- random A
     for (int i = 0; i < r*k; i++) {
-        // float x = ((rand() % 2000) - 1000) / 1000.0f;
-        // union { float f; uint32_t u; } t;
-        // t.f = x;
-        // A[i] = t.u >> 16;
-        A[i] = 0x3f80;
+        float x = ((rand() % 2000) - 1000) / 1000.0f;
+        union { float f; uint32_t u; } t;
+        t.f = x;
+        A[i] = t.u >> 16;
+        // A[i] = 0x3f80;
     }
     // ---- random B (0..15)
     for (int i = 0; i < c*k/2; i++)
-        // B[i] = rand() & 0xFF;
-        B[i] = 0x11;
+        B[i] = rand() & 0xFF;
+        // B[i] = 0x11;
 
     // ---- random scales
     for (int i = 0; i < c*(k/32); i++) {
-        // float s = ((rand() % 2000) / 1000.0f);
-        // union { float f; uint32_t u; } t;
-        // t.f = s;
-        // S[i] = t.u >> 16;
-        S[i] = 0x3f80;
+        float s = ((rand() % 2000) / 1000.0f);
+        union { float f; uint32_t u; } t;
+        t.f = s;
+        S[i] = t.u >> 16;
+        // S[i] = 0x3f80;
     }
 
     for (int i = 0; i < r*c; ++i)
         C[i] = 0.0f;     
-    // reference_kernel(A, B, S, C_ref, r, c, k, lut);
     for (int m0 = 0; m0 < r; m0 += mr) {
         for (int n0 = 0; n0 < c; n0 += nr) 
         {
@@ -84,7 +83,8 @@ int main() {
                 mr,
                 nr,
                 k,
-                lut
+                lut,
+                c
             );
         }
     }
@@ -125,9 +125,9 @@ int main() {
     }
 
 
-    // float max_abs_err = 0.0f;
-    // float max_rel_err = 0.0f;
-    // int bad_count = 0;
+    float max_abs_err = 0.0f;
+    float max_rel_err = 0.0f;
+    int bad_count = 0;
 
     for (int i = 0; i < r; ++i) {
         for (int j = 0; j < c; ++j) {
@@ -137,28 +137,28 @@ int main() {
             float v = C[idx];
             float ref = C_ref[idx];
 
-            // float abs_err = fabsf(v - ref);
-            // float rel_err = abs_err / (fabsf(ref) + 1e-6f);
+            float abs_err = fabsf(v - ref);
+            float rel_err = abs_err / (fabsf(ref) + 1e-6f);
 
-            // if (abs_err > max_abs_err)
-            //     max_abs_err = abs_err;
+            if (abs_err > max_abs_err)
+                max_abs_err = abs_err;
 
-            // if (rel_err > max_rel_err)
-            //     max_rel_err = rel_err;
+            if (rel_err > max_rel_err)
+                max_rel_err = rel_err;
 
-            // // print first few mismatches
-            // if (abs_err > 1e-3f && bad_count < 10) {
-            //     printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",
-            //         i, j, v, ref, abs_err, rel_err);
-            //     bad_count++;
-            // }
+            // print first few mismatches
+            if (abs_err > 1e-3f && bad_count < 10) {
+                printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",
+                    i, j, v, ref, abs_err, rel_err);
+                bad_count++;
+            }
 
-            printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
+            // printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
         }
     }
 
-    // printf("Max abs error = %g\n", max_abs_err);
-    // printf("Max rel error = %g\n", max_rel_err);
+    printf("Max abs error = %g\n", max_abs_err);
+    printf("Max rel error = %g\n", max_rel_err);
 
 
     return 0;
