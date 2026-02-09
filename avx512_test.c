@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include<stdint.h>
+#include<time.h>
 #include <math.h>
 #include "src/avx512_kernel.h"
 
@@ -36,11 +37,11 @@ static inline float bf16_to_fp32(uint16_t x) {
 
 int main() {
 
-    const int r = 200;
-    const int c = 200;
-    const int k = 6400;   // MUST be multiple of 32
-    const int mr = 2;   // should divide r for now
-    const int nr = 1;   // should divide c for now
+    const int r = 256;
+    const int c = 256;
+    const int k = 7168;   // MUST be multiple of 32
+    const int mr = 8;   // should divide r for now
+    const int nr = 4;   // should divide c for now
 
     uint16_t A[r*k];
     uint8_t  B[c*k/2];
@@ -72,24 +73,17 @@ int main() {
 
     for (int i = 0; i < r*c; ++i)
         C[i] = 0.0f;     
-    for (int m0 = 0; m0 < r; m0 += mr) {
-        for (int n0 = 0; n0 < c; n0 += nr) 
-        {
-            kernel_bf16_int4_bf16(
-                A + m0*k,
-                B + n0*(k/2),
-                S + n0*(k/32),
-                C + m0*c + n0,
-                mr,
-                nr,
-                k,
-                lut,
-                c
-            );
-        }
-    }
 
 
+
+    clock_t avx512_gemm_start = clock();
+    matmul(A, B, S, C, r, c, k, lut);
+    clock_t avx512_gemm_end = clock();
+
+    double avx512_time = (avx512_gemm_end-avx512_gemm_start);
+
+
+    clock_t ref_start = clock();
 
     for (int i = 0; i < r; ++i) {
         for (int j = 0; j < c; ++j) {
@@ -124,6 +118,9 @@ int main() {
         }
     }
 
+    clock_t ref_end = clock();
+
+    double ref_time = (ref_end-ref_start);
 
     float max_abs_err = 0.0f;
     float max_rel_err = 0.0f;
@@ -148,8 +145,7 @@ int main() {
 
             // print first few mismatches
             if (abs_err > 1e-3f && bad_count < 10) {
-                printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",
-                    i, j, v, ref, abs_err, rel_err);
+                // printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",i, j, v, ref, abs_err, rel_err);
                 bad_count++;
             }
 
@@ -159,6 +155,8 @@ int main() {
 
     printf("Max abs error = %g\n", max_abs_err);
     printf("Max rel error = %g\n", max_rel_err);
+
+    printf("avx512f time %f  ref time %f", avx512_time, ref_time);
 
 
     return 0;

@@ -34,21 +34,10 @@ void kernel_bf16_int4_bf16(
 
 
                 __m256i b_packed_256 = _mm256_loadu_si256((__m256i*)&Bc[ki/2]);    //stores 8 bits twice (11,22,33....)
-
-
                 __m512i b_expanded = _mm512_cvtepu8_epi16(b_packed_256);            //converted to 16 bits
-
-
-
-
-    
-
-
                 uint16_t tmp_bytes[32];
                 _mm512_storeu_si512(tmp_bytes, b_expanded);
-
                 uint16_t tmp_bf16[32];
-
                 for (int t = 0; t < 32; ++t) {
                     int byte_idx = t >> 1;          // t / 2
                     uint8_t byte = (uint8_t)tmp_bytes[byte_idx];
@@ -59,12 +48,21 @@ void kernel_bf16_int4_bf16(
 
                     tmp_bf16[t] = lut[u4];
                 }
-
                 __m512i b_bf16 = _mm512_loadu_si512(tmp_bf16);
 
 
 
-                // __m512 acc = _mm512_setzero_ps();
+
+
+
+
+
+
+
+
+
+
+
 
                 __m512 acc = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_bf16);
 
