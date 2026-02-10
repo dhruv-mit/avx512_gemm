@@ -2,10 +2,10 @@
 
 #pragma once
 
-void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K, const uint16_t* lut)
+void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K, int mr, int nr, const uint16_t* lut)
 {
-    int mr = 32;
-    int nr = 16;
+    // int mr = 1;
+    // int nr = 1;
 
 
     for (int m0 = 0; m0 < M; m0 += mr) 

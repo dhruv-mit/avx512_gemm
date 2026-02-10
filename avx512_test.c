@@ -37,11 +37,11 @@ static inline float bf16_to_fp32(uint16_t x) {
 
 int main() {
 
-    const int r = 256;
-    const int c = 256;
-    const int k = 7168;   // MUST be multiple of 32
-    const int mr = 8;   // should divide r for now
-    const int nr = 4;   // should divide c for now
+    const int r = 80;
+    const int c = 80;
+    const int k = 32;   // MUST be multiple of 32
+    const int mr = 16;   // should divide r for now
+    const int nr = 16;   // should divide c for now
 
     uint16_t A[r*k];
     uint8_t  B[c*k/2];
@@ -49,7 +49,8 @@ int main() {
     float C_ref[r*c];
     float C[r*c];
 
-    // ---- random A
+
+
     for (int i = 0; i < r*k; i++) {
         float x = ((rand() % 2000) - 1000) / 1000.0f;
         union { float f; uint32_t u; } t;
@@ -57,12 +58,10 @@ int main() {
         A[i] = t.u >> 16;
         // A[i] = 0x3f80;
     }
-    // ---- random B (0..15)
     for (int i = 0; i < c*k/2; i++)
         B[i] = rand() & 0xFF;
         // B[i] = 0x11;
 
-    // ---- random scales
     for (int i = 0; i < c*(k/32); i++) {
         float s = ((rand() % 2000) / 1000.0f);
         union { float f; uint32_t u; } t;
@@ -77,7 +76,7 @@ int main() {
 
 
     clock_t avx512_gemm_start = clock();
-    matmul(A, B, S, C, r, c, k, lut);
+    matmul(A, B, S, C, r, c, k, mr, nr, lut);
     clock_t avx512_gemm_end = clock();
 
     double avx512_time = (avx512_gemm_end-avx512_gemm_start);
@@ -143,13 +142,12 @@ int main() {
             if (rel_err > max_rel_err)
                 max_rel_err = rel_err;
 
-            // print first few mismatches
             if (abs_err > 1e-3f && bad_count < 10) {
                 // printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",i, j, v, ref, abs_err, rel_err);
                 bad_count++;
             }
 
-            // printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
+            printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
         }
     }
 
