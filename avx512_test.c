@@ -37,11 +37,11 @@ static inline float bf16_to_fp32(uint16_t x) {
 
 int main() {
 
-    const int r = 80;
-    const int c = 80;
-    const int k = 32;   // MUST be multiple of 32
-    const int mr = 16;   // should divide r for now
-    const int nr = 16;   // should divide c for now
+    const int r = 32;
+    const int c = 256;
+    const int k = 7168;   // MUST be multiple of 32
+    const int mr = 1;   // should divide r for now
+    const int nr = 1;   // should divide c for now
 
     uint16_t A[r*k];
     uint8_t  B[c*k/2];
@@ -143,11 +143,11 @@ int main() {
                 max_rel_err = rel_err;
 
             if (abs_err > 1e-3f && bad_count < 10) {
-                // printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",i, j, v, ref, abs_err, rel_err);
+                printf("Mismatch at (%d,%d): C=%f  C_ref=%f  abs=%g rel=%g\n",i, j, v, ref, abs_err, rel_err);
                 bad_count++;
             }
 
-            printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
+            // printf("(%d,%d): C=%f  C_ref=%f  diff=%f\n",i,j,v,ref,v-ref);
         }
     }
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(MATMUL)
 
-set(CMAKE_C_FLAGS "-O3 -march=native -Wall -mavx512f -mavx512bf16 -fopenmp")
+set(CMAKE_C_FLAGS "-O3 -march=native -Wall -mavx512f -mavx512bf16 -fopenmp -msse -msse2")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
