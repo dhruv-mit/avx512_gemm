@@ -43,11 +43,11 @@ int main() {
     const int mr = 1;   // should divide r for now
     const int nr = 1;   // should divide c for now
 
-    uint16_t A[r*k];
-    uint8_t  B[c*k/2];
-    uint16_t S[c*(k/32)];
-    float C_ref[r*c];
-    float C[r*c];
+    uint16_t* A = (uint16_t*)malloc(r*k*sizeof(uint16_t));
+    uint8_t* B = (uint8_t*)malloc(c*k/2*sizeof(uint8_t));
+    uint16_t* S = (uint16_t*)malloc(c*k/32*sizeof(uint16_t));
+    float* C_ref = (float*)malloc(r*c*sizeof(float*));
+    float* C = (float*)malloc(r*c*sizeof(float*));
 
 
 

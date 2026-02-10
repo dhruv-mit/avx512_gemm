@@ -51,8 +51,8 @@ void kernel_bf16_int4_bf16(
                 */
 
 
-                __m128i lo = _mm_unpacklo_epi8(b_lo_128, b_hi_128);   // b_lo(0) b_hi(0) b_lo(1) b_hi(1) ... b_lo(7) b_hi(7)
-                b_hi_128 = _mm_unpackhi_epi8(b_lo_128, b_hi_128);   // b_lo(8) b_hi(8) b_lo(9) b_hi(9) ... b_lo(15) b_hi(15)
+                __m128i lo = _mm_unpacklo_epi8(b_lo_128, b_hi_128);         // b_lo(0) b_hi(0) b_lo(1) b_hi(1) ... b_lo(7) b_hi(7)
+                b_hi_128 = _mm_unpackhi_epi8(b_lo_128, b_hi_128);           // b_lo(8) b_hi(8) b_lo(9) b_hi(9) ... b_lo(15) b_hi(15)
 
                 __m256i b_256 = _mm256_set_m128i(b_hi_128, lo);             // contacatonate the above two
 
