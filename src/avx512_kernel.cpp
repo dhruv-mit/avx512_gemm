@@ -23,6 +23,9 @@ void kernel_bf16_int4_bf16(
 
     __m512i lut_r = _mm512_mask_loadu_epi16(_mm512_undefined_si512(), 0xFFFF, lut);    //1111 1111 1111 1111, basically take first 16 values form lut, and dont care about the rest
 
+    __m128i mask00001111 = _mm_set1_epi8(0x0F);
+
+
     for(int row = 0;row < r;row++)
     {
         const uint16_t* Ar = A + row*k;
@@ -38,6 +41,10 @@ void kernel_bf16_int4_bf16(
             const uint16_t* Sc_1 = S + (col * k)/32 + k/32;
 
 
+            __m512 acc = _mm512_setzero_ps();
+            __m512 acc_1 = _mm512_setzero_ps();
+
+
 
             for(int ki = 0;ki < k;ki += 32)
             {
@@ -49,9 +56,9 @@ void kernel_bf16_int4_bf16(
 
 
                 __m128i b_hi_128 = _mm_srli_epi16(b_128, 4);                 //right shifts to get the first 4 bits of bs
-                b_hi_128 = _mm_and_si128(b_hi_128, _mm_set1_epi8(0x0F));         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
+                b_hi_128 = _mm_and_si128(b_hi_128, mask00001111);         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
 
-                __m128i b_lo_128 = _mm_and_si128(b_128, _mm_set1_epi8(0x0F));       //bitwise and with 00001111
+                __m128i b_lo_128 = _mm_and_si128(b_128, mask00001111);       //bitwise and with 00001111
 
 
                 /* 
@@ -69,7 +76,7 @@ void kernel_bf16_int4_bf16(
 
                 __m512i b = _mm512_cvtepu8_epi16(b_256);                         //finally convert to 16 bit and store in 512 bit register
                 b = _mm512_permutexvar_epi16(b, lut_r);                 //the nibbles are treates as indiecs and then we do a lookup and get bf16 bits
-                __m512 acc = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);               
+                __m512 acc_tmp = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);               
 
                 //here also, when b is declared, it actually stores the indices for the lookup table, then we use the same register to store the actual bf16s
 
@@ -84,40 +91,42 @@ void kernel_bf16_int4_bf16(
                 // }
 
 
-                float reduced = _mm512_reduce_add_ps(acc);
-
 
                 uint32_t s_bits = ((uint32_t)Sc[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
                 float scale_f = *(float*)&s_bits;
 
+                __m512 scale_broadcast = _mm512_set1_ps(scale_f);
 
-                Cr[col] += reduced * scale_f;
+
+                acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
+
+
 
                                 
-                
-                
-                
-                
-                
-                
-                
+
                 __m128i b_128_1 = _mm_loadu_epi8((void*)&Bc_1[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16     
                 __m128i b_hi_128_1 = _mm_srli_epi16(b_128_1, 4);                 //right shifts to get the first 4 bits of bs
-                b_hi_128_1 = _mm_and_si128(b_hi_128_1, _mm_set1_epi8(0x0F));         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
-                __m128i b_lo_128_1 = _mm_and_si128(b_128_1, _mm_set1_epi8(0x0F));       //bitwise and with 00001111
+                b_hi_128_1 = _mm_and_si128(b_hi_128_1, mask00001111);         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
+                __m128i b_lo_128_1 = _mm_and_si128(b_128_1, mask00001111);       //bitwise and with 00001111
                 __m128i lo_1 = _mm_unpacklo_epi8(b_lo_128_1, b_hi_128_1);         // b_lo(0) b_hi(0) b_lo(1) b_hi(1) ... b_lo(7) b_hi(7)
                 b_hi_128_1 = _mm_unpackhi_epi8(b_lo_128_1, b_hi_128_1);           // b_lo(8) b_hi(8) b_lo(9) b_hi(9) ... b_lo(15) b_hi(15)
                 __m256i b_256_1 = _mm256_set_m128i(b_hi_128_1, lo_1);             // contacatonate the above two
                 __m512i b_1 = _mm512_cvtepu8_epi16(b_256_1);                         //finally convert to 16 bit and store in 512 bit register
                 b_1 = _mm512_permutexvar_epi16(b_1, lut_r);                 //the nibbles are treates as indiecs and then we do a lookup and get bf16 bits
-                __m512 acc_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_1);               
-                float reduced_1 = _mm512_reduce_add_ps(acc_1);
+                __m512 acc_tmp_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_1);               
 
                 uint32_t s_bits_1 = ((uint32_t)Sc_1[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
                 float scale_f_1 = *(float*)&s_bits_1;
-                Cr[col+1] += reduced_1 * scale_f_1;
+
+                __m512 scale_broadcast_1 = _mm512_set1_ps(scale_f_1);
+                acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast_1, acc_1);
 
             }
+
+
+            Cr[col] = _mm512_reduce_add_ps(acc);
+            Cr[col+1] = _mm512_reduce_add_ps(acc_1);
+
         }
     }
 }
