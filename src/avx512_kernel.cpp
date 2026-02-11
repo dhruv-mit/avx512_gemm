@@ -1,6 +1,7 @@
 #include "avx512_kernel.h"
 
 
+
 void kernel_bf16_int4_bf16(
     const uint16_t* A,             //pointer to start of sub matrix of A
     const uint8_t * B,              //pointer to start of sub matrix of B(2 elements per 8 bit)
@@ -17,9 +18,10 @@ void kernel_bf16_int4_bf16(
 
     //step 1- load the lookup table in a register
 
-    __m256i lut256 = _mm256_loadu_si256((__m256i*)lut);
-    __m512i lut_r  = _mm512_zextsi256_si512(lut256);                //zero extend a 256 bit register (16*16 values + 0s)
+    // __m256i lut256 = _mm256_loadu_si256((__m256i*)lut);
+    // __m512i lut_r  = _mm512_zextsi256_si512(lut256);                //zero extend a 256 bit register (16*16 values + 0s)
 
+    __m512i lut_r = _mm512_mask_loadu_epi16(_mm512_undefined_si512(), 0xFFFF, lut);    //1111 1111 1111 1111, basically take first 16 values form lut, and dont care about the rest
 
     for(int row = 0;row < r;row++)
     {
@@ -31,6 +33,8 @@ void kernel_bf16_int4_bf16(
         {
             const uint8_t* Bc = B + (col * k)/2;
             const uint16_t* Sc = S + (col * k)/32;
+
+
 
             for(int ki = 0;ki < k;ki += 32)
             {
@@ -78,12 +82,12 @@ void kernel_bf16_int4_bf16(
                 float reduced = _mm512_reduce_add_ps(acc);
 
 
-                uint32_t s_bits = ((uint32_t)Sc[ki/32]) << 16;
+                uint32_t s_bits = ((uint32_t)Sc[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
                 float scale_f = *(float*)&s_bits;
 
+                // float scale_f = Sc[ki/32];
+
                 // printf("row %d col %d reduced %f  reduced*scale %f\n",row, col, reduced, reduced*scale_f);
-
-
                 Cr[col] += reduced * scale_f;
 
             }

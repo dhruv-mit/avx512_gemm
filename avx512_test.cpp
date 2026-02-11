@@ -4,6 +4,7 @@
 #include<time.h>
 #include <math.h>
 #include "src/avx512_kernel.h"
+#include <omp.h>
 
 
 static const uint16_t lut[16] = {
@@ -39,9 +40,9 @@ int main() {
 
     const int r = 32;
     const int c = 256;
-    const int k = 7168;   // MUST be multiple of 32
-    const int mr = 1;   // should divide r for now
-    const int nr = 1;   // should divide c for now
+    const int k = 71680;   // MUST be multiple of 32
+    const int mr = 16;   // should divide r for now
+    const int nr = 16;   // should divide c for now
 
     uint16_t* A = (uint16_t*)malloc(r*k*sizeof(uint16_t));
     uint8_t* B = (uint8_t*)malloc(c*k/2*sizeof(uint8_t));
@@ -75,15 +76,16 @@ int main() {
 
 
 
-    clock_t avx512_gemm_start = clock();
+    double avx512_gemm_start = omp_get_wtime();
     matmul(A, B, S, C, r, c, k, mr, nr, lut);
-    clock_t avx512_gemm_end = clock();
+    double avx512_gemm_end = omp_get_wtime();
 
     double avx512_time = (avx512_gemm_end-avx512_gemm_start);
 
 
-    clock_t ref_start = clock();
+    double ref_start = omp_get_wtime();
 
+    // #pragma omp parallel for 
     for (int i = 0; i < r; ++i) {
         for (int j = 0; j < c; ++j) {
 
@@ -117,7 +119,7 @@ int main() {
         }
     }
 
-    clock_t ref_end = clock();
+    double ref_end = omp_get_wtime();
 
     double ref_time = (ref_end-ref_start);
 
@@ -154,7 +156,7 @@ int main() {
     printf("Max abs error = %g\n", max_abs_err);
     printf("Max rel error = %g\n", max_rel_err);
 
-    printf("avx512f time %f  ref time %f", avx512_time, ref_time);
+    printf("avx512f time %f  ref time %f ref time /avx_512 time %f", avx512_time, ref_time, (float)ref_time/(float)avx512_time);
 
 
     return 0;

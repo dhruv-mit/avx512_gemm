@@ -1,6 +1,7 @@
-#pragma once
 #include <immintrin.h>
 #include <stdint.h>
+#include "avx512_matmul.h"
+// #include <omp.h>
 
 void kernel_bf16_int4_bf16(
     const uint16_t* A,             //A matrix
