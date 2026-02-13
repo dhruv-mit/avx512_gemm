@@ -52,11 +52,11 @@ void random_int8_mat(uint8_t* B, int mn_1_2)            //input pointer to the m
         B[i] = rand() & 0xFF;
 }
 
-int M[5] = {1, 4,8,16,32};                      //small shapes for the activation input 
+int M[3] = {8,16,32};                      //small shapes for the activation input 
 int N[3] = {768, 2048, 7168};                           //
 int K[2] = {256*8, 896*8};                         //the K values aree for A matrix, for B we do K/2, and for S, we will do K/32
 
-int m_r[4] = {8,16,32,64};
+int m_r[1] = {16};
 // int n_r[5];
 
 
@@ -131,12 +131,24 @@ int main()
                         at::TensorOptions().dtype(at::kBFloat16).device(at::kCPU)
                     );
 
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+
 
                     double avx512_gemm_start = omp_get_wtime();
                     matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
                     double avx512_gemm_end = omp_get_wtime();
 
 
+
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
 
                     double torch_gemm_start = omp_get_wtime();
                     at::mm_out(C_out, A_t, B_t);
