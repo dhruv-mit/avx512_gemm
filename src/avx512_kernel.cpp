@@ -32,17 +32,28 @@ void kernel_bf16_int4_bf16(
 
         float* Cr = C + row*N;
 
-        for(int col = 0; col < c;col += 2)
+        for(int col = 0; col < c;col += 4)
         {
             const uint8_t* Bc = B + (col * k)/2;
             const uint8_t* Bc_1 = B + (col * k)/2 + k/2;
+            const uint8_t* Bc_2 = B + (col * k)/2 + 2*k/2;
+            const uint8_t* Bc_3 = B + (col * k)/2 + 3*k/2;
+
+            
 
             const uint16_t* Sc = S + (col * k)/32;
             const uint16_t* Sc_1 = S + (col * k)/32 + k/32;
+            const uint16_t* Sc_2 = S + (col * k)/32 + 2*k/32;
+            const uint16_t* Sc_3 = S + (col * k)/32 + 3*k/32;
+
 
 
             __m512 acc = _mm512_setzero_ps();
             __m512 acc_1 = _mm512_setzero_ps();
+            __m512 acc_2 = _mm512_setzero_ps();
+            __m512 acc_3 = _mm512_setzero_ps();
+
+
 
 
 
@@ -121,11 +132,53 @@ void kernel_bf16_int4_bf16(
                 __m512 scale_broadcast_1 = _mm512_set1_ps(scale_f_1);
                 acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast_1, acc_1);
 
+
+
+                __m128i b_128_2 = _mm_loadu_epi8((void*)&Bc_2[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16     
+                __m128i b_hi_128_2 = _mm_srli_epi16(b_128_2, 4);                 //right shifts to get the first 4 bits of bs
+                b_hi_128_2 = _mm_and_si128(b_hi_128_2, mask00001111);         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
+                __m128i b_lo_128_2 = _mm_and_si128(b_128_2, mask00001111);       //bitwise and with 00001111
+                __m128i lo_2 = _mm_unpacklo_epi8(b_lo_128_2, b_hi_128_2);         // b_lo(0) b_hi(0) b_lo(1) b_hi(1) ... b_lo(7) b_hi(7)
+                b_hi_128_2 = _mm_unpackhi_epi8(b_lo_128_2, b_hi_128_2);           // b_lo(8) b_hi(8) b_lo(9) b_hi(9) ... b_lo(15) b_hi(15)
+                __m256i b_256_2 = _mm256_set_m128i(b_hi_128_2, lo_2);             // contacatonate the above two
+                __m512i b_2 = _mm512_cvtepu8_epi16(b_256_2);                         //finally convert to 16 bit and store in 512 bit register
+                b_2 = _mm512_permutexvar_epi16(b_2, lut_r);                 //the nibbles are treates as indiecs and then we do a lookup and get bf16 bits
+                __m512 acc_tmp_2 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_2);               
+
+                uint32_t s_bits_2 = ((uint32_t)Sc_2[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
+                float scale_f_2 = *(float*)&s_bits_2;
+
+                __m512 scale_broadcast_2 = _mm512_set1_ps(scale_f_2);
+                acc_2 = _mm512_fmadd_ps(acc_tmp_2, scale_broadcast_2, acc_2);
+
+
+
+
+
+                __m128i b_128_3 = _mm_loadu_epi8((void*)&Bc_3[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16     
+                __m128i b_hi_128_3 = _mm_srli_epi16(b_128_3, 4);                 //right shifts to get the first 4 bits of bs
+                b_hi_128_3 = _mm_and_si128(b_hi_128_3, mask00001111);         //shift operation is for 16bit, so two bytes are hifted right at once, then we take and with 00001111 so it is fixed
+                __m128i b_lo_128_3 = _mm_and_si128(b_128_3, mask00001111);       //bitwise and with 00001111
+                __m128i lo_3 = _mm_unpacklo_epi8(b_lo_128_3, b_hi_128_3);         // b_lo(0) b_hi(0) b_lo(1) b_hi(1) ... b_lo(7) b_hi(7)
+                b_hi_128_3 = _mm_unpackhi_epi8(b_lo_128_3, b_hi_128_3);           // b_lo(8) b_hi(8) b_lo(9) b_hi(9) ... b_lo(15) b_hi(15)
+                __m256i b_256_3 = _mm256_set_m128i(b_hi_128_3, lo_3);             // contacatonate the above two
+                __m512i b_3 = _mm512_cvtepu8_epi16(b_256_3);                         //finally convert to 16 bit and store in 512 bit register
+                b_3 = _mm512_permutexvar_epi16(b_3, lut_r);                 //the nibbles are treates as indiecs and then we do a lookup and get bf16 bits
+                __m512 acc_tmp_3 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_3);               
+
+                uint32_t s_bits_3 = ((uint32_t)Sc_3[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
+                float scale_f_3 = *(float*)&s_bits_3;
+
+                __m512 scale_broadcast_3 = _mm512_set1_ps(scale_f_3);
+                acc_3 = _mm512_fmadd_ps(acc_tmp_3, scale_broadcast_3, acc_3);
+
             }
 
 
             Cr[col] = _mm512_reduce_add_ps(acc);
             Cr[col+1] = _mm512_reduce_add_ps(acc_1);
+            Cr[col+2] = _mm512_reduce_add_ps(acc_2);
+            Cr[col+3] = _mm512_reduce_add_ps(acc_3);
 
         }
     }

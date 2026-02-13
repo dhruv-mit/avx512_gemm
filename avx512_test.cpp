@@ -39,16 +39,16 @@ static inline float bf16_to_fp32(uint16_t x) {
 int main() {
 
     const int r = 32;
-    const int c = 256;
-    const int k = 71680;   // MUST be multiple of 32
-    const int mr = 16;   // should divide r for now
-    const int nr = 16;   // should divide c for now
+    const int c = 32;
+    const int k = 32;   // MUST be multiple of 32
+    const int mr = 4;   // should divide r for now
+    const int nr = 4;   // should divide c for now
 
     uint16_t* A = (uint16_t*)malloc(r*k*sizeof(uint16_t));
     uint8_t* B = (uint8_t*)malloc(c*k/2*sizeof(uint8_t));
     uint16_t* S = (uint16_t*)malloc(c*k/32*sizeof(uint16_t));
-    float* C_ref = (float*)malloc(r*c*sizeof(float*));
-    float* C = (float*)malloc(r*c*sizeof(float*));
+    float* C_ref = (float*)malloc(r*c*sizeof(float));
+    float* C = (float*)malloc(r*c*sizeof(float));
 
 
 

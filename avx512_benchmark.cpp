@@ -10,6 +10,7 @@
 #include <ATen/Parallel.h>
 #include <ATen/cpu/vec/vec.h>
 
+
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 
@@ -52,10 +53,10 @@ void random_int8_mat(uint8_t* B, int mn_1_2)            //input pointer to the m
 }
 
 int M[5] = {1, 4,8,16,32};                      //small shapes for the activation input 
-int N[2] = {2048, 7168};                           //
+int N[3] = {768, 2048, 7168};                           //
 int K[2] = {256*8, 896*8};                         //the K values aree for A matrix, for B we do K/2, and for S, we will do K/32
 
-int m_r[5] = {1,2,4,8,16};
+int m_r[4] = {8,16,32,64};
 // int n_r[5];
 
 
@@ -63,8 +64,8 @@ int main()
 {
 
 
-    at::set_num_threads(1);
-    at::set_num_interop_threads(1); 
+    // at::set_num_threads(1);
+    // at::set_num_interop_threads(1); 
 
     for(int i = 0; i < sizeof(M)/sizeof(int);i++)
     {
@@ -80,23 +81,23 @@ int main()
                     int nr = min(m_r[l], N[j]);
                     
                     
-                    uint16_t* A = (uint16_t*)malloc(M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
-                    uint16_t* A_torch = (uint16_t*)malloc(M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
-                    // uint16_t* A_torch = (uint16_t*)aligned_alloc(64, M[i] * K[k] * sizeof(uint16_t));
+                    uint16_t* A = (uint16_t*)aligned_alloc(64, M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
+                    // uint16_t* A_torch = (uint16_t*)malloc(M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
+                    uint16_t* A_torch = (uint16_t*)aligned_alloc(64, M[i] * K[k] * sizeof(uint16_t));
                     
                     
-                    uint8_t* B = (uint8_t*)malloc((K[k] * N[j] / 2) * sizeof(uint8_t));                         //B matrix in int8 for avx512
-                    uint16_t* B_torch = (uint16_t*)malloc((K[k] * N[j]) * sizeof(uint16_t));                         //B matrix in int8 for avx512
-                    // uint16_t* B_torch = (uint16_t*)aligned_alloc(64, K[k] * N[j] * sizeof(uint16_t));
+                    uint8_t* B = (uint8_t*)aligned_alloc(64, (K[k] * N[j] / 2) * sizeof(uint8_t));                         //B matrix in int8 for avx512
+                    // uint16_t* B_torch = (uint16_t*)malloc((K[k] * N[j]) * sizeof(uint16_t));                         //B matrix in int8 for avx512
+                    uint16_t* B_torch = (uint16_t*)aligned_alloc(64, K[k] * N[j] * sizeof(uint16_t));
                     
                     
-                    uint16_t* S = (uint16_t*)malloc((K[k] * N[j] / 32) * sizeof(uint16_t));                     //S matriix for avx512
+                    uint16_t* S = (uint16_t*)aligned_alloc(64, (K[k] * N[j] / 32) * sizeof(uint16_t));                     //S matriix for avx512
                     
                     
-                    float* C = (float*)malloc(M[i]*N[j]*sizeof(float));                                         //Avx512 output matrix
-                    uint16_t* C_torch = (uint16_t*)malloc(M[i]*N[j]*sizeof(uint16_t));                                         //Avx512 output matrix
+                    float* C = (float*)aligned_alloc(64, M[i]*N[j]*sizeof(float));                                         //Avx512 output matrix
+                    // uint16_t* C_torch = (uint16_t*)malloc(M[i]*N[j]*sizeof(uint16_t));                                         //Avx512 output matrix
 
-                    // uint16_t* C_torch = (uint16_t*)aligned_alloc(64, M[i] * N[j] * sizeof(uint16_t));
+                    uint16_t* C_torch = (uint16_t*)aligned_alloc(64, M[i] * N[j] * sizeof(uint16_t));
                     
 
 
@@ -132,7 +133,7 @@ int main()
 
 
                     double avx512_gemm_start = omp_get_wtime();
-                    matmul(A, B, S, C, M[i], N[j], K[k], 1, 1, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
                     double avx512_gemm_end = omp_get_wtime();
 
 
