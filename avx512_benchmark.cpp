@@ -82,7 +82,7 @@ int main()
                     
                     
                     uint16_t* A = (uint16_t*)aligned_alloc(64, M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
-                    // uint16_t* A_torch = (uint16_t*)malloc(M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
+                    // uint16_t* A = (uint16_t*)malloc(M[i] * K[k] * sizeof(uint16_t));                            //A matrix, common for both torch and avx512
                     uint16_t* A_torch = (uint16_t*)aligned_alloc(64, M[i] * K[k] * sizeof(uint16_t));
                     
                     
@@ -133,9 +133,9 @@ int main()
 
                     matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
                     matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
-                    // matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
-                    // matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
-                    // matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
+                    matmul(A, B, S, C, M[i], N[j], K[k], mr, nr, lut);
 
 
                     double avx512_gemm_start = omp_get_wtime();
@@ -146,9 +146,9 @@ int main()
 
                     at::mm_out(C_out, A_t, B_t);
                     at::mm_out(C_out, A_t, B_t);
-                    // at::mm_out(C_out, A_t, B_t);
-                    // at::mm_out(C_out, A_t, B_t);
-                    // at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
+                    at::mm_out(C_out, A_t, B_t);
 
                     double torch_gemm_start = omp_get_wtime();
                     at::mm_out(C_out, A_t, B_t);

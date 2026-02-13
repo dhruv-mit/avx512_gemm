@@ -68,7 +68,10 @@ void kernel_bf16_int4_bf16(
         for(int col = 0; col < c;col += 1)
         {
             const uint8_t* Bc = B + (col * k)/2;
+            const uint8_t* Bc_1 = B + ((col+1) * k)/2;
+
             const uint16_t* Sc = S + (col * k)/32;
+            const uint16_t* Sc_1 = S + ((col+1) * k)/32;
 
 
             __m512 acc = _mm512_setzero_ps();
@@ -92,25 +95,6 @@ void kernel_bf16_int4_bf16(
 
             for(int ki = 0;ki < k;ki += 32)
             {
-                __m512i a = _mm512_loadu_si512((void*)&Ar[ki]);
-                __m512i a_1 = _mm512_loadu_si512((void*)&Ar_1[ki]);
-                __m512i a_2 = _mm512_loadu_si512((void*)&Ar_2[ki]);
-                __m512i a_3 = _mm512_loadu_si512((void*)&Ar_3[ki]);
-                __m512i a_4 = _mm512_loadu_si512((void*)&Ar_4[ki]);
-                __m512i a_5 = _mm512_loadu_si512((void*)&Ar_5[ki]);
-                __m512i a_6 = _mm512_loadu_si512((void*)&Ar_6[ki]);
-                __m512i a_7 = _mm512_loadu_si512((void*)&Ar_7[ki]);
-                __m512i a_8 = _mm512_loadu_si512((void*)&Ar_8[ki]);
-                __m512i a_9 = _mm512_loadu_si512((void*)&Ar_9[ki]);
-                __m512i a_10 = _mm512_loadu_si512((void*)&Ar_10[ki]);
-                __m512i a_11 = _mm512_loadu_si512((void*)&Ar_11[ki]);
-                __m512i a_12 = _mm512_loadu_si512((void*)&Ar_12[ki]);
-                __m512i a_13 = _mm512_loadu_si512((void*)&Ar_13[ki]);
-                __m512i a_14 = _mm512_loadu_si512((void*)&Ar_14[ki]);
-                __m512i a_15 = _mm512_loadu_si512((void*)&Ar_15[ki]);
-
-
-
                 __m128i b_128 = _mm_loadu_epi8((void*)&Bc[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16
 
 
@@ -147,43 +131,91 @@ void kernel_bf16_int4_bf16(
 
 
 
-                __m512 acc_tmp = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);        
-                __m512 acc_tmp_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b);               
-                __m512 acc_tmp_2 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b);               
-                __m512 acc_tmp_3 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_3, (__m512bh)b);               
-                __m512 acc_tmp_4 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_4, (__m512bh)b);               
-                __m512 acc_tmp_5 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_5, (__m512bh)b);               
-                __m512 acc_tmp_6 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_6, (__m512bh)b);               
-                __m512 acc_tmp_7 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_7, (__m512bh)b);               
-                __m512 acc_tmp_8 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_8, (__m512bh)b);               
-                __m512 acc_tmp_9 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_9, (__m512bh)b);               
-                __m512 acc_tmp_10 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_10, (__m512bh)b);               
-                __m512 acc_tmp_11 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_11, (__m512bh)b);               
-                __m512 acc_tmp_12 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_12, (__m512bh)b);               
-                __m512 acc_tmp_13 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_13, (__m512bh)b);               
-                __m512 acc_tmp_14 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_14, (__m512bh)b);               
-                __m512 acc_tmp_15 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_15, (__m512bh)b);               
+        
 
+
+
+
+
+                __m512i a = _mm512_load_si512((void*)&Ar[ki]);
+                __m512 acc_tmp = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);    
+                acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
+
+                __m512i a_1 = _mm512_load_si512((void*)&Ar_1[ki]);
+                __m512 acc_tmp_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b);   
+                acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_1);
+
+                
+                __m512i a_2 = _mm512_load_si512((void*)&Ar_2[ki]);
+                __m512 acc_tmp_2 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b);               
+                acc_2 = _mm512_fmadd_ps(acc_tmp_2, scale_broadcast, acc_2);
+
+                __m512i a_3 = _mm512_load_si512((void*)&Ar_3[ki]);
+                __m512 acc_tmp_3 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_3, (__m512bh)b);               
+                acc_3 = _mm512_fmadd_ps(acc_tmp_3, scale_broadcast, acc_3);
+
+                __m512i a_4 = _mm512_load_si512((void*)&Ar_4[ki]);
+                __m512 acc_tmp_4 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_4, (__m512bh)b);               
+                acc_4 = _mm512_fmadd_ps(acc_tmp_4, scale_broadcast, acc_4);
+                
+
+                __m512i a_5 = _mm512_load_si512((void*)&Ar_5[ki]);
+                __m512 acc_tmp_5 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_5, (__m512bh)b);               
+                acc_5 = _mm512_fmadd_ps(acc_tmp_5, scale_broadcast, acc_5);
+                
+
+                __m512i a_6 = _mm512_load_si512((void*)&Ar_6[ki]);
+                __m512 acc_tmp_6 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_6, (__m512bh)b);               
+                acc_6 = _mm512_fmadd_ps(acc_tmp_6, scale_broadcast, acc_6);
+                
+
+                __m512i a_7 = _mm512_load_si512((void*)&Ar_7[ki]);
+                __m512 acc_tmp_7 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_7, (__m512bh)b);               
+                acc_7 = _mm512_fmadd_ps(acc_tmp_7, scale_broadcast, acc_7);
+                
+
+                __m512i a_8 = _mm512_load_si512((void*)&Ar_8[ki]);
+                __m512 acc_tmp_8 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_8, (__m512bh)b);               
+                acc_8 = _mm512_fmadd_ps(acc_tmp_8, scale_broadcast, acc_8);
+
+
+                __m512i a_9 = _mm512_load_si512((void*)&Ar_9[ki]);
+                __m512 acc_tmp_9 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_9, (__m512bh)b);               
+                acc_9 = _mm512_fmadd_ps(acc_tmp_9, scale_broadcast, acc_9);
+
+                
+                __m512i a_10 = _mm512_load_si512((void*)&Ar_10[ki]);
+                __m512 acc_tmp_10 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_10, (__m512bh)b);               
+                acc_10 = _mm512_fmadd_ps(acc_tmp_10, scale_broadcast, acc_10);
+                
+                
+                __m512i a_11 = _mm512_load_si512((void*)&Ar_11[ki]);
+                __m512 acc_tmp_11 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_11, (__m512bh)b);               
+                acc_11 = _mm512_fmadd_ps(acc_tmp_11, scale_broadcast, acc_11);
+                
+                __m512i a_12 = _mm512_load_si512((void*)&Ar_12[ki]);
+                __m512 acc_tmp_12 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_12, (__m512bh)b);               
+                acc_12 = _mm512_fmadd_ps(acc_tmp_12, scale_broadcast, acc_12);
+                
+          
+          
+                __m512i a_13 = _mm512_load_si512((void*)&Ar_13[ki]);
+                __m512 acc_tmp_13 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_13, (__m512bh)b);               
+                acc_13 = _mm512_fmadd_ps(acc_tmp_13, scale_broadcast, acc_13);
+                
+              
+                __m512i a_14 = _mm512_load_si512((void*)&Ar_14[ki]);
+                __m512 acc_tmp_14 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_14, (__m512bh)b);               
+                acc_14 = _mm512_fmadd_ps(acc_tmp_14, scale_broadcast, acc_14);
+                
+
+
+                __m512i a_15 = _mm512_load_si512((void*)&Ar_15[ki]);
+                __m512 acc_tmp_15 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_15, (__m512bh)b);               
+                acc_15 = _mm512_fmadd_ps(acc_tmp_15, scale_broadcast, acc_15);
 
                 //here also, when b is declared, it actually stores the indices for the lookup table, then we use the same register to store the actual bf16s
 
-
-                acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
-                acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_1);
-                acc_2 = _mm512_fmadd_ps(acc_tmp_2, scale_broadcast, acc_2);
-                acc_3 = _mm512_fmadd_ps(acc_tmp_3, scale_broadcast, acc_3);
-                acc_4 = _mm512_fmadd_ps(acc_tmp_4, scale_broadcast, acc_4);
-                acc_5 = _mm512_fmadd_ps(acc_tmp_5, scale_broadcast, acc_5);
-                acc_6 = _mm512_fmadd_ps(acc_tmp_6, scale_broadcast, acc_6);
-                acc_7 = _mm512_fmadd_ps(acc_tmp_7, scale_broadcast, acc_7);
-                acc_8 = _mm512_fmadd_ps(acc_tmp_8, scale_broadcast, acc_8);
-                acc_9 = _mm512_fmadd_ps(acc_tmp_9, scale_broadcast, acc_9);
-                acc_10 = _mm512_fmadd_ps(acc_tmp_10, scale_broadcast, acc_10);
-                acc_11 = _mm512_fmadd_ps(acc_tmp_11, scale_broadcast, acc_11);
-                acc_12 = _mm512_fmadd_ps(acc_tmp_12, scale_broadcast, acc_12);
-                acc_13 = _mm512_fmadd_ps(acc_tmp_13, scale_broadcast, acc_13);
-                acc_14 = _mm512_fmadd_ps(acc_tmp_14, scale_broadcast, acc_14);
-                acc_15 = _mm512_fmadd_ps(acc_tmp_15, scale_broadcast, acc_15);
 
             }
 
