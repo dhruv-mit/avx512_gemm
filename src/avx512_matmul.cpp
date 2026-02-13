@@ -1,5 +1,3 @@
-#pragma once
-
 #include "avx512_kernel.h"
 // #include <omp.h>
 
@@ -7,7 +5,7 @@
 void matmul(uint16_t* A, uint8_t* B, uint16_t* S, float* C, int M, int N, int K, int mr, int nr, const uint16_t* lut)
 {
 
-    #pragma omp parallel for collapse(2) schedule(static)
+    #pragma omp parallel for collapse(2) schedule(static, 1)
     for (int m0 = 0; m0 < M; m0 += mr) 
     {
         for (int n0 = 0; n0 < N; n0 += nr) 

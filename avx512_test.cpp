@@ -39,10 +39,10 @@ static inline float bf16_to_fp32(uint16_t x) {
 int main() {
 
     const int r = 32;
-    const int c = 1;
+    const int c = 32;
     const int k = 32;   // MUST be multiple of 32
-    const int mr = 8;   // should divide r for now
-    const int nr = 1;   // should divide c for now
+    const int mr = 16;   // should divide r for now
+    const int nr = 16;   // should divide c for now
 
     uint16_t* A = (uint16_t*)malloc(r*k*sizeof(uint16_t));
     uint8_t* B = (uint8_t*)malloc(c*k/2*sizeof(uint8_t));
@@ -60,15 +60,15 @@ int main() {
         // A[i] = 0x3f80;
     }
     for (int i = 0; i < c*k/2; i++)
-        // B[i] = rand() & 0xFF;
-        B[i] = 0x11;
+        B[i] = rand() & 0xFF;
+        // B[i] = 0x11;
 
     for (int i = 0; i < c*(k/32); i++) {
         float s = ((rand() % 2000) / 1000.0f);
         union { float f; uint32_t u; } t;
         t.f = s;
-        // S[i] = t.u >> 16;
-        S[i] = 0x3f80;
+        S[i] = t.u >> 16;
+        // S[i] = 0x3f80;
     }
 
     for (int i = 0; i < r*c; ++i)

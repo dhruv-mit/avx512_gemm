@@ -26,7 +26,7 @@ void kernel_bf16_int4_bf16(
     __m128i mask00001111 = _mm_set1_epi8(0x0F);
 
 
-    for(int row = 0;row < r;row+=8)
+    for(int row = 0;row < r;row+=16)
     {
         const uint16_t* Ar = A + row*k;
         const uint16_t* Ar_1 = A + (row+1)*k;
@@ -36,6 +36,14 @@ void kernel_bf16_int4_bf16(
         const uint16_t* Ar_5 = A + (row+5)*k;
         const uint16_t* Ar_6 = A + (row+6)*k;
         const uint16_t* Ar_7 = A + (row+7)*k;
+        const uint16_t* Ar_8 = A + (row+8)*k;
+        const uint16_t* Ar_9 = A + (row+9)*k;
+        const uint16_t* Ar_10 = A + (row+10)*k;
+        const uint16_t* Ar_11 = A + (row+11)*k;
+        const uint16_t* Ar_12 = A + (row+12)*k;
+        const uint16_t* Ar_13 = A + (row+13)*k;
+        const uint16_t* Ar_14 = A + (row+14)*k;
+        const uint16_t* Ar_15 = A + (row+15)*k;
 
 
 
@@ -47,6 +55,14 @@ void kernel_bf16_int4_bf16(
         float* Cr_5 = C + (row+5)*N;
         float* Cr_6 = C + (row+6)*N;
         float* Cr_7 = C + (row+7)*N;
+        float* Cr_8 = C + (row+8)*N;
+        float* Cr_9 = C + (row+9)*N;
+        float* Cr_10 = C + (row+10)*N;
+        float* Cr_11 = C + (row+11)*N;
+        float* Cr_12 = C + (row+12)*N;
+        float* Cr_13 = C + (row+13)*N;
+        float* Cr_14 = C + (row+14)*N;
+        float* Cr_15 = C + (row+15)*N;
 
 
         for(int col = 0; col < c;col += 1)
@@ -63,8 +79,14 @@ void kernel_bf16_int4_bf16(
             __m512 acc_5 = _mm512_setzero_ps();
             __m512 acc_6 = _mm512_setzero_ps();
             __m512 acc_7 = _mm512_setzero_ps();
-
-
+            __m512 acc_8 = _mm512_setzero_ps();
+            __m512 acc_9 = _mm512_setzero_ps();
+            __m512 acc_10 = _mm512_setzero_ps();
+            __m512 acc_11 = _mm512_setzero_ps();
+            __m512 acc_12 = _mm512_setzero_ps();
+            __m512 acc_13 = _mm512_setzero_ps();
+            __m512 acc_14 = _mm512_setzero_ps();
+            __m512 acc_15 = _mm512_setzero_ps();
 
 
 
@@ -78,7 +100,14 @@ void kernel_bf16_int4_bf16(
                 __m512i a_5 = _mm512_loadu_si512((void*)&Ar_5[ki]);
                 __m512i a_6 = _mm512_loadu_si512((void*)&Ar_6[ki]);
                 __m512i a_7 = _mm512_loadu_si512((void*)&Ar_7[ki]);
-
+                __m512i a_8 = _mm512_loadu_si512((void*)&Ar_8[ki]);
+                __m512i a_9 = _mm512_loadu_si512((void*)&Ar_9[ki]);
+                __m512i a_10 = _mm512_loadu_si512((void*)&Ar_10[ki]);
+                __m512i a_11 = _mm512_loadu_si512((void*)&Ar_11[ki]);
+                __m512i a_12 = _mm512_loadu_si512((void*)&Ar_12[ki]);
+                __m512i a_13 = _mm512_loadu_si512((void*)&Ar_13[ki]);
+                __m512i a_14 = _mm512_loadu_si512((void*)&Ar_14[ki]);
+                __m512i a_15 = _mm512_loadu_si512((void*)&Ar_15[ki]);
 
 
 
@@ -126,33 +155,35 @@ void kernel_bf16_int4_bf16(
                 __m512 acc_tmp_5 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_5, (__m512bh)b);               
                 __m512 acc_tmp_6 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_6, (__m512bh)b);               
                 __m512 acc_tmp_7 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_7, (__m512bh)b);               
+                __m512 acc_tmp_8 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_8, (__m512bh)b);               
+                __m512 acc_tmp_9 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_9, (__m512bh)b);               
+                __m512 acc_tmp_10 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_10, (__m512bh)b);               
+                __m512 acc_tmp_11 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_11, (__m512bh)b);               
+                __m512 acc_tmp_12 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_12, (__m512bh)b);               
+                __m512 acc_tmp_13 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_13, (__m512bh)b);               
+                __m512 acc_tmp_14 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_14, (__m512bh)b);               
+                __m512 acc_tmp_15 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_15, (__m512bh)b);               
 
-       
 
                 //here also, when b is declared, it actually stores the indices for the lookup table, then we use the same register to store the actual bf16s
 
 
-
-                // uint16_t print_buf[32];
-                // _mm512_store_si512(print_buf, b_idx);
-
-                // for(int i = 0;i < 32;i++)
-                // {
-                //     printf("%f ", (float)print_buf[i]);
-                // }
-
-
-
-
                 acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
                 acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_1);
-                acc_2 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_2);
-                acc_3 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_3);
-                acc_4 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_4);
-                acc_5 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_5);
-                acc_6 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_6);
-                acc_7 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_7);
-
+                acc_2 = _mm512_fmadd_ps(acc_tmp_2, scale_broadcast, acc_2);
+                acc_3 = _mm512_fmadd_ps(acc_tmp_3, scale_broadcast, acc_3);
+                acc_4 = _mm512_fmadd_ps(acc_tmp_4, scale_broadcast, acc_4);
+                acc_5 = _mm512_fmadd_ps(acc_tmp_5, scale_broadcast, acc_5);
+                acc_6 = _mm512_fmadd_ps(acc_tmp_6, scale_broadcast, acc_6);
+                acc_7 = _mm512_fmadd_ps(acc_tmp_7, scale_broadcast, acc_7);
+                acc_8 = _mm512_fmadd_ps(acc_tmp_8, scale_broadcast, acc_8);
+                acc_9 = _mm512_fmadd_ps(acc_tmp_9, scale_broadcast, acc_9);
+                acc_10 = _mm512_fmadd_ps(acc_tmp_10, scale_broadcast, acc_10);
+                acc_11 = _mm512_fmadd_ps(acc_tmp_11, scale_broadcast, acc_11);
+                acc_12 = _mm512_fmadd_ps(acc_tmp_12, scale_broadcast, acc_12);
+                acc_13 = _mm512_fmadd_ps(acc_tmp_13, scale_broadcast, acc_13);
+                acc_14 = _mm512_fmadd_ps(acc_tmp_14, scale_broadcast, acc_14);
+                acc_15 = _mm512_fmadd_ps(acc_tmp_15, scale_broadcast, acc_15);
 
             }
 
@@ -165,12 +196,15 @@ void kernel_bf16_int4_bf16(
             Cr_5[col] = _mm512_reduce_add_ps(acc_5);
             Cr_6[col] = _mm512_reduce_add_ps(acc_6);
             Cr_7[col] = _mm512_reduce_add_ps(acc_7);
+            Cr_8[col] = _mm512_reduce_add_ps(acc_8);
+            Cr_9[col] = _mm512_reduce_add_ps(acc_9);
+            Cr_10[col] = _mm512_reduce_add_ps(acc_10);
+            Cr_11[col] = _mm512_reduce_add_ps(acc_11);
+            Cr_12[col] = _mm512_reduce_add_ps(acc_12);
+            Cr_13[col] = _mm512_reduce_add_ps(acc_13);
+            Cr_14[col] = _mm512_reduce_add_ps(acc_14);
+            Cr_15[col] = _mm512_reduce_add_ps(acc_15);
 
-            
-
-            // Cr[col+1] = _mm512_reduce_add_ps(acc_1);
-            // Cr[col+2] = _mm512_reduce_add_ps(acc_2);
-            // Cr[col+3] = _mm512_reduce_add_ps(acc_3);
 
         }
     }
