@@ -14,7 +14,27 @@
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 
-static const uint16_t lut[16] = {
+// static const uint16_t lut[16] = {
+//     0x0000, // 0
+//     0x3f80, // 1
+//     0x4000, // 2
+//     0x4040, // 3
+//     0x4080, // 4
+//     0x40a0, // 5
+//     0x40c0, // 6
+//     0x40e0, // 7
+//     0x4100, // 8
+//     0x4110, // 9
+//     0x4120, // 10
+//     0x4130, // 11
+//     0x4140, // 12
+//     0x4150, // 13
+//     0x4160, // 14
+//     0x4170  // 15
+// };
+#include <stdint.h>
+
+static const uint16_t lut[16] __attribute__((aligned(16))) = {
     0x0000, // 0
     0x3f80, // 1
     0x4000, // 2
@@ -36,6 +56,8 @@ static const uint16_t lut[16] = {
 
 
 
+
+
 void random_bf16_mat(uint16_t* A, int mn)
 {
     for (int i = 0; i < mn; i++) {
@@ -52,7 +74,7 @@ void random_int8_mat(uint8_t* B, int mn_1_2)            //input pointer to the m
         B[i] = rand() & 0xFF;
 }
 
-int M[2] = {16,32};                      //small shapes for the activation input 
+int M[2] = {16,48};                      //small shapes for the activation input 
 int N[3] = {768, 2048, 7168};                           //
 int K[2] = {256*8, 896*8};                         //the K values aree for A matrix, for B we do K/2, and for S, we will do K/32
 
@@ -168,4 +190,5 @@ int main()
             }
         }
     }
+
 }
