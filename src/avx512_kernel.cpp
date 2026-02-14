@@ -64,6 +64,15 @@ void kernel_bf16_int4_bf16(
 
             for(int ki = 0;ki < k;ki += 32)
             {
+
+                if (ki + 32 < k) {
+                    _mm_prefetch((const char*)&Ar[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_1[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_2[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_3[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Bc[ki/2 + 16], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Bc_1[ki/2 + 16], _MM_HINT_T0);
+                }
                 __m128i b_128 = _mm_loadu_epi8((void*)&Bc[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16
 
                 __m128i b_hi_128 = _mm_srli_epi16(b_128, 4);                 //right shifts to get the first 4 bits of bs
@@ -141,35 +150,32 @@ void kernel_bf16_int4_bf16(
                 __m512 acc_tmp = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);    
                 acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
                 
-                
+                __m512 acc_tmp_0_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_1);    
+                acc_0_1 = _mm512_fmadd_ps(acc_tmp_0_1, scale_broadcast_1, acc_0_1);
+
 
                 __m512i a_1 = _mm512_load_si512((void*)&Ar_1[ki]);
                 __m512 acc_tmp_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b);   
                 acc_1 = _mm512_fmadd_ps(acc_tmp_1, scale_broadcast, acc_1);
+             
+                __m512 acc_tmp_1_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b_1);   
+                acc_1_1 = _mm512_fmadd_ps(acc_tmp_1_1, scale_broadcast_1, acc_1_1);
 
-                
+
+
                 __m512i a_2 = _mm512_load_si512((void*)&Ar_2[ki]);
                 __m512 acc_tmp_2 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b);               
                 acc_2 = _mm512_fmadd_ps(acc_tmp_2, scale_broadcast, acc_2);
 
+               __m512 acc_tmp_2_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b_1);               
+                acc_2_1 = _mm512_fmadd_ps(acc_tmp_2_1, scale_broadcast_1, acc_2_1);
+
+
+
                 __m512i a_3 = _mm512_load_si512((void*)&Ar_3[ki]);
                 __m512 acc_tmp_3 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_3, (__m512bh)b);               
                 acc_3 = _mm512_fmadd_ps(acc_tmp_3, scale_broadcast, acc_3);
-
-
-
-
-
-                __m512 acc_tmp_0_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_1);    
-                acc_0_1 = _mm512_fmadd_ps(acc_tmp_0_1, scale_broadcast_1, acc_0_1);
-                
-                __m512 acc_tmp_1_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b_1);   
-                acc_1_1 = _mm512_fmadd_ps(acc_tmp_1_1, scale_broadcast_1, acc_1_1);
-
-                
-                __m512 acc_tmp_2_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b_1);               
-                acc_2_1 = _mm512_fmadd_ps(acc_tmp_2_1, scale_broadcast_1, acc_2_1);
-
+ 
                 __m512 acc_tmp_3_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_3, (__m512bh)b_1);               
                 acc_3_1 = _mm512_fmadd_ps(acc_tmp_3_1, scale_broadcast_1, acc_3_1);
 
