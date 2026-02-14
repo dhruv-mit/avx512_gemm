@@ -68,10 +68,8 @@ void kernel_bf16_int4_bf16(
         for(int col = 0; col < c;col += 1)
         {
             const uint8_t* Bc = B + (col * k)/2;
-            const uint8_t* Bc_1 = B + ((col+1) * k)/2;
 
             const uint16_t* Sc = S + (col * k)/32;
-            const uint16_t* Sc_1 = S + ((col+1) * k)/32;
 
 
             __m512 acc = _mm512_setzero_ps();
@@ -95,6 +93,43 @@ void kernel_bf16_int4_bf16(
 
             for(int ki = 0;ki < k;ki += 32)
             {
+
+                if (ki + 32 < k) {
+                    _mm_prefetch((const char*)&Ar[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_1[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_2[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_3[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_4[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_5[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_6[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_7[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_8[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_9[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_10[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_11[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_12[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_13[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_14[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Ar_15[ki + 32], _MM_HINT_T0);
+                    _mm_prefetch((const char*)&Bc[ki/2 + 16], _MM_HINT_T0);
+                }
+                // __m512i a   = _mm512_load_si512((void*)&Ar[ki]);
+                // __m512i a_1 = _mm512_load_si512((void*)&Ar_1[ki]);
+                // __m512i a_2 = _mm512_load_si512((void*)&Ar_2[ki]);
+                // __m512i a_3 = _mm512_load_si512((void*)&Ar_3[ki]);
+                // __m512i a_4 = _mm512_load_si512((void*)&Ar_4[ki]);
+                // __m512i a_5 = _mm512_load_si512((void*)&Ar_5[ki]);
+                // __m512i a_6 = _mm512_load_si512((void*)&Ar_6[ki]);
+                // __m512i a_7 = _mm512_load_si512((void*)&Ar_7[ki]);
+                // __m512i a_8 = _mm512_load_si512((void*)&Ar_8[ki]);
+                // __m512i a_9 = _mm512_load_si512((void*)&Ar_9[ki]);
+                // __m512i a_10 = _mm512_load_si512((void*)&Ar_10[ki]);
+                // __m512i a_11 = _mm512_load_si512((void*)&Ar_11[ki]);
+                // __m512i a_12 = _mm512_load_si512((void*)&Ar_12[ki]);
+                // __m512i a_13 = _mm512_load_si512((void*)&Ar_13[ki]);
+                // __m512i a_14 = _mm512_load_si512((void*)&Ar_14[ki]);
+                // __m512i a_15 = _mm512_load_si512((void*)&Ar_15[ki]);
+
                 __m128i b_128 = _mm_loadu_epi8((void*)&Bc[ki/2]);        //32 int4s as 16 int8s stored in b_128, b0, b1, b2 , .. b16
 
 
