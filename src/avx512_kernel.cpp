@@ -126,7 +126,7 @@ void kernel_bf16_int4_bf16(
 
 
                 uint32_t s_bits_1 = ((uint32_t)Sc_1[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
-                float scale_f_1 = *(float*)&s_bits;
+                float scale_f_1 = *(float*)&s_bits_1;
 
                 __m512 scale_broadcast_1 = _mm512_set1_ps(scale_f_1);
 
