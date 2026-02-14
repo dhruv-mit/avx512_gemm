@@ -125,6 +125,11 @@ void kernel_bf16_int4_bf16(
                 __m512 scale_broadcast = _mm512_set1_ps(scale_f);
 
 
+                uint32_t s_bits_1 = ((uint32_t)Sc_1[ki/32]) << 16;                  //float is bf16 with 16 more decimals so just shift left a bf16 to get float
+                float scale_f_1 = *(float*)&s_bits;
+
+                __m512 scale_broadcast_1 = _mm512_set1_ps(scale_f_1);
+
 
         
 
@@ -135,6 +140,7 @@ void kernel_bf16_int4_bf16(
                 __m512i a = _mm512_load_si512((void*)&Ar[ki]);
                 __m512 acc_tmp = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b);    
                 acc = _mm512_fmadd_ps(acc_tmp, scale_broadcast, acc);
+                
                 
 
                 __m512i a_1 = _mm512_load_si512((void*)&Ar_1[ki]);
@@ -155,17 +161,17 @@ void kernel_bf16_int4_bf16(
 
 
                 __m512 acc_tmp_0_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a, (__m512bh)b_1);    
-                acc_0_1 = _mm512_fmadd_ps(acc_tmp_0_1, scale_broadcast, acc_0_1);
+                acc_0_1 = _mm512_fmadd_ps(acc_tmp_0_1, scale_broadcast_1, acc_0_1);
                 
                 __m512 acc_tmp_1_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_1, (__m512bh)b_1);   
-                acc_1_1 = _mm512_fmadd_ps(acc_tmp_1_1, scale_broadcast, acc_1_1);
+                acc_1_1 = _mm512_fmadd_ps(acc_tmp_1_1, scale_broadcast_1, acc_1_1);
 
                 
                 __m512 acc_tmp_2_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_2, (__m512bh)b_1);               
-                acc_2_1 = _mm512_fmadd_ps(acc_tmp_2_1, scale_broadcast, acc_2_1);
+                acc_2_1 = _mm512_fmadd_ps(acc_tmp_2_1, scale_broadcast_1, acc_2_1);
 
                 __m512 acc_tmp_3_1 = _mm512_dpbf16_ps(_mm512_setzero_ps(), (__m512bh)a_3, (__m512bh)b_1);               
-                acc_3_1 = _mm512_fmadd_ps(acc_tmp_3_1, scale_broadcast, acc_3_1);
+                acc_3_1 = _mm512_fmadd_ps(acc_tmp_3_1, scale_broadcast_1, acc_3_1);
 
 
 
